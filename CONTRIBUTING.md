@@ -32,7 +32,7 @@ Do not weaken or skip that test to make a change pass. If it fails after a DiviO
 
 WordPress Coding Standards for PHP. Match the surrounding code; consistency within a file wins over any external guide.
 
-Machine-facing identifiers take the `rtv_` prefix (options, filters, nonce actions, transient keys). The plugin slug and text domain deliberately do not. See CLAUDE.md.
+Machine-facing identifiers take the `rtv_diviops` prefix (options, filters, nonce actions, transient keys). The plugin slug and text domain deliberately do not. See CLAUDE.md.
 
 Comments explain what and why, never what changed or how something used to work.
 

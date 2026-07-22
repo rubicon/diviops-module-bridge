@@ -23,8 +23,10 @@ specifies another." This repo specifies:
 - Plugin slug and text domain: `diviops-module-bridge`, no prefix. The slug is the
   install directory and the update key and is permanent, and this plugin's purpose
   is to be recognizable to an upstream author who is not us.
-- Everything machine-facing: `rtv_` prefix. Constants, option names, filter and
-  action names, nonce actions, transient and cache keys.
+- Everything machine-facing: `rtv_diviops` prefix. Constants, option names, filter and
+  action names, nonce actions, transient and cache keys. WPCS enforces a minimum
+  prefix length that `rtv` alone does not meet, so the registered prefix is
+  `rtv_diviops`.
 
 Both halves of the WordPress overlay still hold: the text domain equals the slug,
 and the main plugin file is `diviops-module-bridge.php`.
