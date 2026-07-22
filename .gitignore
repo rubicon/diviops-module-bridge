@@ -1,0 +1,32 @@
+# Worktrees (one per issue branch, see the repository process policy)
+worktrees/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# PHP tooling
+vendor/
+composer.lock
+.phpcs-cache
+.phpunit.result.cache
+
+# Node (tooling only; this plugin ships no JS build)
+node_modules/
+
+# Build output
+build/
+dist/
+*.zip
+
+# Local agent state
+.remember/
+.claude/settings.local.json

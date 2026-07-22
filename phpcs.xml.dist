@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="DiviOps Module Bridge">
+	<description>WordPress Coding Standards for diviops-module-bridge.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/worktrees/*</exclude-pattern>
+	<exclude-pattern>*/tests/fixtures/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<config name="minimum_wp_version" value="6.5"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<rule ref="WordPress">
+		<!-- The pure core is deliberately framework-free and is exercised by
+		     tests/run.php without WordPress loaded, so file naming there follows
+		     the class-per-file convention rather than WordPress template rules. -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="diviops-module-bridge"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Machine-facing identifiers carry the rtv_ vendor prefix. The slug and
+	     text domain intentionally do not; see CLAUDE.md. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="rtv"/>
+				<element value="RTV"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

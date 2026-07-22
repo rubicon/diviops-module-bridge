@@ -1,0 +1,90 @@
+name: PR Policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Untrusted event data (head_ref, actor, PR body) is passed through `env:` and
+# read as a shell variable, never interpolated into a `run:` script. A branch
+# name is attacker-controlled on a fork PR and would otherwise be injectable.
+
+jobs:
+  # Trusted first-party automation cannot satisfy the human-oriented rules:
+  # their branches are tool-owned and their bodies carry a dependency diff or a
+  # changelog rather than an issue reference. This job decides once, and the two
+  # policy jobs below consume it, so the required checks still conclude green.
+  actor:
+    name: Classify actor
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.check.outputs.trusted }}
+    steps:
+      - id: check
+        env:
+          ACTOR: ${{ github.actor }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$ACTOR" == "dependabot[bot]" ]] \
+            || [[ "$HEAD_REF" == dependabot/* ]] \
+            || [[ "$HEAD_REF" == release-please--* ]]; then
+            echo "trusted=true" >> "$GITHUB_OUTPUT"
+            printf 'Trusted automation: %s on %s\n' "$ACTOR" "$HEAD_REF"
+          else
+            echo "trusted=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  branch-name:
+    name: Branch naming
+    needs: actor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name
+        env:
+          TRUSTED: ${{ needs.actor.outputs.trusted }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$TRUSTED" == "true" ]]; then
+            echo "Exempt: trusted automation."
+            exit 0
+          fi
+          if [[ ! "$HEAD_REF" =~ ^dev/[0-9]+-[a-z0-9.-]+$ ]]; then
+            printf '::error::Branch %q does not match ^dev/[0-9]+-[a-z0-9.-]+$\n' "$HEAD_REF"
+            echo "::error::Expected form: dev/<issue-number>-<short-kebab-description>"
+            exit 1
+          fi
+          printf 'OK: %s\n' "$HEAD_REF"
+
+  issue-link:
+    name: Issue link
+    needs: actor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body links an issue
+        env:
+          TRUSTED: ${{ needs.actor.outputs.trusted }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if [[ "$TRUSTED" == "true" ]]; then
+            echo "Exempt: trusted automation."
+            exit 0
+          fi
+          if ! grep -Eiq '(close[sd]?|fixe?[sd]?|resolve[sd]?) #[0-9]+' <<< "$PR_BODY"; then
+            echo "::error::PR body must link its issue with closing syntax, e.g. 'Closes #123'."
+            exit 1
+          fi
+          echo "OK: issue link found."
+
+  commitlint:
+    name: Semantic commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
+        with:
+          configFile: commitlint.config.js
