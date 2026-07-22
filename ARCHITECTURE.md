@@ -42,7 +42,7 @@ This tax is the reason the upstream issue asks for a single extension point rath
 
 ## Vendor prefix
 
-Machine-facing identifiers use `rtv_` (constants, options, filters, nonce actions, transient keys). The plugin slug and text domain are `diviops-module-bridge` with no prefix, because those are public identity and the slug is permanent. See CLAUDE.md.
+Machine-facing identifiers use the `rtv_diviops` prefix (constants, options, filters, nonce actions, transient keys). WPCS enforces a minimum prefix length that `rtv` alone does not meet. The plugin slug and text domain are `diviops-module-bridge` with no prefix, because those are public identity and the slug is permanent. See CLAUDE.md.
 
 ## Namespace boundary
 

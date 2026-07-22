@@ -6,8 +6,18 @@
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
-	<exclude-pattern>*/worktrees/*</exclude-pattern>
-	<exclude-pattern>*/tests/fixtures/*</exclude-pattern>
+	<!-- Anchored to the ruleset root on purpose. An unanchored */worktrees/*
+	     matches the absolute path, and every branch lives at
+	     <repo>/worktrees/<name>/, so the unanchored form excluded every file
+	     under development and made local runs exit 0 having scanned nothing. -->
+	<exclude-pattern type="relative">^worktrees/*</exclude-pattern>
+
+	<!-- tests/run.php is a standalone CLI runner that executes without WordPress
+	     loaded, which is the entire point of the pure-function core. WordPress
+	     rules about escaping output and wp_json_encode() do not apply to it, and
+	     silencing them individually would be a longer list than this exclusion.
+	     Test files are covered by php -l in CI and by the suite exercising itself. -->
+	<exclude-pattern>*/tests/*</exclude-pattern>
 
 	<arg name="extensions" value="php"/>
 	<arg name="colors"/>
@@ -16,12 +26,7 @@
 	<config name="minimum_wp_version" value="6.5"/>
 	<config name="testVersion" value="7.4-"/>
 
-	<rule ref="WordPress">
-		<!-- The pure core is deliberately framework-free and is exercised by
-		     tests/run.php without WordPress loaded, so file naming there follows
-		     the class-per-file convention rather than WordPress template rules. -->
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
-	</rule>
+	<rule ref="WordPress"/>
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
@@ -31,13 +36,14 @@
 		</properties>
 	</rule>
 
-	<!-- Machine-facing identifiers carry the rtv_ vendor prefix. The slug and
-	     text domain intentionally do not; see CLAUDE.md. -->
+	<!-- Machine-facing identifiers carry the rtv vendor prefix. WPCS enforces a
+	     minimum prefix length that "rtv" alone does not meet, so the registered
+	     prefix is rtv_diviops, which is what the constants already use. The
+	     plugin slug and text domain intentionally carry no prefix; see CLAUDE.md. -->
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="rtv"/>
-				<element value="RTV"/>
+				<element value="rtv_diviops"/>
 			</property>
 		</properties>
 	</rule>

@@ -60,5 +60,18 @@ jobs:
             squizlabs/php_codesniffer wp-coding-standards/wpcs
           echo "$HOME/.composer/vendor/bin" >> "$GITHUB_PATH"
 
+      # A ruleset that matches nothing exits 0 and reads as a pass, which is
+      # worse than having no gate at all. Fail loudly instead of silently
+      # reporting green on an empty file list.
+      - name: Assert PHPCS has files to scan
+        run: |
+          report=$(phpcs --report=json -q || true)
+          scanned=$(printf '%s' "$report" | jq '.files | length')
+          echo "phpcs queued $scanned file(s)"
+          if [ "$scanned" -lt 1 ]; then
+            echo "::error::phpcs scanned 0 files. The ruleset excludes everything; this is a blind gate, not a pass."
+            exit 1
+          fi
+
       - name: Run PHPCS
         run: phpcs -q --report=checkstyle | cs2pr
