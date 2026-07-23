@@ -80,11 +80,32 @@ jobs:
 
   commitlint:
     name: Semantic commits
+    needs: actor
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
+
+      # The PR title is linted for every actor, trusted automation included. It is
+      # the one Conventional Commits surface a bot controls, the adopted standard
+      # requires it, and it becomes the squash-merge subject. A title is one line,
+      # so body-length rules never apply here. PR_TITLE is read as a shell variable,
+      # never interpolated into the script (see the header note on injection).
+      - name: Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          npm install --no-save @commitlint/cli @commitlint/config-conventional
+          printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.config.mjs
+
+      # Commit bodies are linted for human PRs only. Trusted automation is validated
+      # on its title above; its generated bodies (Dependabot dependency diffs,
+      # release-please changelogs) carry long lines no human wrote and are not
+      # hand-authored commits. body-max-line-length stays enforced for humans,
+      # unchanged from the original job.
+      - name: Lint commits (human PRs only)
+        if: needs.actor.outputs.trusted != 'true'
+        uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
         with:
           configFile: commitlint.config.mjs
