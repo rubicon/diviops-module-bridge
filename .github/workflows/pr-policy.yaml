@@ -28,9 +28,17 @@ jobs:
           ACTOR: ${{ github.actor }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
+          # Trust requires the actor to BE the automation, not merely a branch
+          # named like it. github.actor is set by GitHub and a human contributor
+          # cannot spoof it; a branch name they can. Dependabot always runs as
+          # dependabot[bot]. release-please opens its PR through a GitHub App whose
+          # actor carries the [bot] suffix, so a bot actor is required before its
+          # release-please--* branch is honored. A human on a branch named
+          # dependabot/* or release-please--* is therefore not trusted. (Dependabot's
+          # conventional PR title, "ci: bump ...", comes from the commit-message
+          # prefix in .github/dependabot.yml; without it the title lint would flag it.)
           if [[ "$ACTOR" == "dependabot[bot]" ]] \
-            || [[ "$HEAD_REF" == dependabot/* ]] \
-            || [[ "$HEAD_REF" == release-please--* ]]; then
+            || { [[ "$ACTOR" == *"[bot]" ]] && [[ "$HEAD_REF" == release-please--* ]]; }; then
             echo "trusted=true" >> "$GITHUB_OUTPUT"
             printf 'Trusted automation: %s on %s\n' "$ACTOR" "$HEAD_REF"
           else
