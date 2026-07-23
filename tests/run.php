@@ -90,6 +90,19 @@ if ( '' !== $filter ) {
 	);
 }
 
+// A suite that discovered nothing must fail, not report a green PASS of zero
+// assertions. Zero files means the glob is wrong, a test was renamed, or a filter
+// matched nothing. Any of those is a broken suite masquerading as a passing one,
+// which is worse than a visible failure. Say which case it is.
+if ( array() === $files ) {
+	if ( '' !== $filter ) {
+		printf( "FAIL  no test file matched the filter '%s' in tests/test-*.php%s", $filter, PHP_EOL );
+	} else {
+		printf( "FAIL  no test files discovered: tests/test-*.php matched nothing%s", PHP_EOL );
+	}
+	exit( 1 );
+}
+
 foreach ( $files as $file ) {
 	RtvTestRunner::$current = basename( $file );
 	require $file;
