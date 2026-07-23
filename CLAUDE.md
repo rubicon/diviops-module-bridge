@@ -78,6 +78,8 @@ php tests/run.php
 No Composer, no PHPUnit, no build step. Block-scanning and merging logic is written
 as dependency-free pure functions so the suite runs without WordPress.
 
-The acceptance gate is the differential test against captured DiviOps output. If you
-change the scanner, that test is the one that matters. Do not weaken it to make a
-change pass.
+The offline differential test asserts the scanner against captured DiviOps output.
+If you change the scanner, that test is the one that matters offline; do not weaken
+it to make a change pass. It proves correctness at capture time but does not detect
+DiviOps upstream drift. The primary guarantee against drift is the runtime
+version-triggered drift check; see the design spec's Drift detection section.
