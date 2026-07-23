@@ -28,9 +28,17 @@ jobs:
           ACTOR: ${{ github.actor }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
+          # Trust requires the actor to BE the automation, not merely a branch
+          # named like it. github.actor is set by GitHub and a human contributor
+          # cannot spoof it; a branch name they can. Dependabot always runs as
+          # dependabot[bot]. release-please opens its PR through a GitHub App whose
+          # actor carries the [bot] suffix, so a bot actor is required before its
+          # release-please--* branch is honored. A human on a branch named
+          # dependabot/* or release-please--* is therefore not trusted. (Dependabot's
+          # conventional PR title, "ci: bump ...", comes from the commit-message
+          # prefix in .github/dependabot.yml; without it the title lint would flag it.)
           if [[ "$ACTOR" == "dependabot[bot]" ]] \
-            || [[ "$HEAD_REF" == dependabot/* ]] \
-            || [[ "$HEAD_REF" == release-please--* ]]; then
+            || { [[ "$ACTOR" == *"[bot]" ]] && [[ "$HEAD_REF" == release-please--* ]]; }; then
             echo "trusted=true" >> "$GITHUB_OUTPUT"
             printf 'Trusted automation: %s on %s\n' "$ACTOR" "$HEAD_REF"
           else
@@ -80,11 +88,32 @@ jobs:
 
   commitlint:
     name: Semantic commits
+    needs: actor
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
+
+      # The PR title is linted for every actor, trusted automation included. It is
+      # the one Conventional Commits surface a bot controls, the adopted standard
+      # requires it, and it becomes the squash-merge subject. A title is one line,
+      # so body-length rules never apply here. PR_TITLE is read as a shell variable,
+      # never interpolated into the script (see the header note on injection).
+      - name: Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          npm install --no-save @commitlint/cli @commitlint/config-conventional
+          printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.config.mjs
+
+      # Commit bodies are linted for human PRs only. Trusted automation is validated
+      # on its title above; its generated bodies (Dependabot dependency diffs,
+      # release-please changelogs) carry long lines no human wrote and are not
+      # hand-authored commits. body-max-line-length stays enforced for humans,
+      # unchanged from the original job.
+      - name: Lint commits (human PRs only)
+        if: needs.actor.outputs.trusted != 'true'
+        uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
         with:
           configFile: commitlint.config.mjs
