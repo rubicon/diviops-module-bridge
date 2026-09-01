@@ -24,8 +24,8 @@ jobs:
           export-env: false
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          APP_ID: "op://Automation/rubicon-release-please-private-key/app id"
-          PRIVATE_KEY: "op://Automation/rubicon-release-please-private-key/private key"
+          APP_ID: "op://Automation/lnacky4l2tmlihrockbutkub7y/app id"
+          PRIVATE_KEY: "op://Automation/lnacky4l2tmlihrockbutkub7y/private key"
 
       # The App token gives release-please a signing identity, so its commits
       # are verified and satisfy require-signed-commits on main.
